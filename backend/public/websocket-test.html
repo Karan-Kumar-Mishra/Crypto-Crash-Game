@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Test Client - Crypto Crash Game</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+            color: white;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: white;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff4757;
+        }
+
+        .status-indicator.connected {
+            background: #2ed573;
+        }
+
+        .game-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .info-card h3 {
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            opacity: 0.8;
+        }
+
+        .info-card .value {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .multiplier {
+            font-size: 3rem;
+            font-weight: 900;
+            text-align: center;
+            margin: 2rem 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        input, select {
+            padding: 0.75rem;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+        }
+
+        .logs {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+        }
+
+        .log-entry {
+            margin-bottom: 0.5rem;
+            padding: 0.25rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .log-entry .timestamp {
+            color: #ffa502;
+            margin-right: 0.5rem;
+        }
+
+        .log-entry .event {
+            color: #2ed573;
+            font-weight: bold;
+        }
+
+        .log-entry .data {
+            color: #ddd;
+            margin-left: 1rem;
+        }
+
+        .error {
+            color: #ff4757;
+        }
+
+        .success {
+            color: #2ed573;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WebSocket Test Client</h1>
+        
+        <div class="status">
+            <div class="status-indicator" id="statusIndicator"></div>
+            <span id="statusText">Connecting...</span>
+        </div>
+
+        <div class="game-info">
+            <div class="info-card">
+                <h3>Game Status</h3>
+                <div class="value" id="gameStatus">Unknown</div>
+            </div>
+            <div class="info-card">
+                <h3>Round ID</h3>
+                <div class="value" id="roundId">-</div>
+            </div>
+            <div class="info-card">
+                <h3>Crash Point</h3>
+                <div class="value" id="crashPoint">-</div>
+            </div>
+            <div class="info-card">
+                <h3>Time Elapsed</h3>
+                <div class="value" id="timeElapsed">0s</div>
+            </div>
+        </div>
+
+        <div class="multiplier" id="multiplier">1.00x</div>
+
+        <div class="controls">
+            <button onclick="joinGame()">Join Game</button>
+            <button onclick="placeBet()" id="betBtn" disabled>Place Bet</button>
+            <button onclick="cashout()" id="cashoutBtn" disabled>Cash Out</button>
+            <button onclick="clearLogs()">Clear Logs</button>
+        </div>
+
+        <div class="input-group">
+            <input type="text" id="playerId" placeholder="Player ID" value="test-player">
+            <input type="number" id="betAmount" placeholder="Bet Amount (USD)" value="10" min="1">
+            <select id="currency">
+                <option value="btc">BTC</option>
+                <option value="eth">ETH</option>
+            </select>
+        </div>
+
+        <div class="logs" id="logs">
+            <div class="log-entry">
+                <span class="timestamp">[System]</span>
+                <span class="event">Initializing WebSocket connection...</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        let gameState = {
+            status: 'unknown',
+            roundId: null,
+            crashPoint: null,
+            multiplier: 1.0,
+            timeElapsed: 0
+        };
+
+        // DOM elements
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusText = document.getElementById('statusText');
+        const gameStatus = document.getElementById('gameStatus');
+        const roundId = document.getElementById('roundId');
+        const crashPoint = document.getElementById('crashPoint');
+        const timeElapsed = document.getElementById('timeElapsed');
+        const multiplier = document.getElementById('multiplier');
+        const betBtn = document.getElementById('betBtn');
+        const cashoutBtn = document.getElementById('cashoutBtn');
+        const logs = document.getElementById('logs');
+
+        // Connection events
+        socket.on('connect', () => {
+            updateStatus(true);
+            addLog('Connected to server', 'success');
+        });
+
+        socket.on('disconnect', () => {
+            updateStatus(false);
+            addLog('Disconnected from server', 'error');
+        });
+
+        // Game events
+        socket.on('game-state', (state) => {
+            gameState = state;
+            updateGameInfo();
+            addLog('Received game state', state);
+        });
+
+        socket.on('round-start', (data) => {
+            gameState.status = 'waiting';
+            gameState.roundId = data.roundId;
+            gameState.crashPoint = data.crashPoint;
+            gameState.multiplier = 1.0;
+            gameState.timeElapsed = 0;
+            updateGameInfo();
+            updateButtons();
+            addLog('Round started', data);
+        });
+
+        socket.on('game-active', (data) => {
+            gameState.status = 'active';
+            updateGameInfo();
+            updateButtons();
+            addLog('Game became active', data);
+        });
+
+        socket.on('multiplier-update', (data) => {
+            gameState.multiplier = data.multiplier;
+            gameState.timeElapsed = data.timeElapsed;
+            updateGameInfo();
+            addLog('Multiplier update', data);
+        });
+
+        socket.on('bet-placed', (bet) => {
+            addLog('Bet placed', bet);
+        });
+
+        socket.on('player-cashout', (cashout) => {
+            addLog('Player cashed out', cashout);
+        });
+
+        socket.on('game-crash', (data) => {
+            gameState.status = 'crashed';
+            gameState.multiplier = data.finalMultiplier;
+            updateGameInfo();
+            updateButtons();
+            addLog('Game crashed', data);
+        });
+
+        socket.on('bet-result', (result) => {
+            if (result.success) {
+                addLog('Bet successful', result, 'success');
+            } else {
+                addLog('Bet failed', result, 'error');
+            }
+        });
+
+        socket.on('cashout-result', (result) => {
+            if (result.success) {
+                addLog('Cashout successful', result, 'success');
+            } else {
+                addLog('Cashout failed', result, 'error');
+            }
+        });
+
+        socket.on('error', (data) => {
+            addLog('Error received', data, 'error');
+        });
+
+        // Functions
+        function updateStatus(connected) {
+            statusIndicator.className = `status-indicator ${connected ? 'connected' : ''}`;
+            statusText.textContent = connected ? 'Connected' : 'Disconnected';
+        }
+
+        function updateGameInfo() {
+            gameStatus.textContent = gameState.status.toUpperCase();
+            roundId.textContent = gameState.roundId || '-';
+            crashPoint.textContent = gameState.crashPoint ? gameState.crashPoint.toFixed(2) + 'x' : '-';
+            timeElapsed.textContent = Math.floor(gameState.timeElapsed / 1000) + 's';
+            multiplier.textContent = gameState.multiplier.toFixed(2) + 'x';
+            
+            // Update multiplier color
+            if (gameState.multiplier >= 10) {
+                multiplier.style.color = '#ff4757';
+            } else if (gameState.multiplier >= 5) {
+                multiplier.style.color = '#ffa502';
+            } else if (gameState.multiplier >= 2) {
+                multiplier.style.color = '#2ed573';
+            } else {
+                multiplier.style.color = '#3742fa';
+            }
+        }
+
+        function updateButtons() {
+            betBtn.disabled = gameState.status !== 'waiting';
+            cashoutBtn.disabled = gameState.status !== 'active';
+        }
+
+        function addLog(message, data = null, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            
+            let logContent = `<span class="timestamp">[${timestamp}]</span>`;
+            logContent += `<span class="event">${message}</span>`;
+            
+            if (data) {
+                logContent += `<div class="data">${JSON.stringify(data, null, 2)}</div>`;
+            }
+            
+            logEntry.innerHTML = logContent;
+            logs.appendChild(logEntry);
+            logs.scrollTop = logs.scrollHeight;
+        }
+
+        function joinGame() {
+            socket.emit('join-game');
+            addLog('Joining game');
+        }
+
+        function placeBet() {
+            const playerId = document.getElementById('playerId').value;
+            const betAmount = parseFloat(document.getElementById('betAmount').value);
+            const currency = document.getElementById('currency').value;
+
+            if (!playerId || !betAmount || betAmount <= 0) {
+                addLog('Invalid bet parameters', null, 'error');
+                return;
+            }
+
+            socket.emit('place-bet', {
+                usdAmount: betAmount,
+                currency: currency
+            });
+            
+            addLog('Placing bet', { playerId, usdAmount: betAmount, currency });
+        }
+
+        function cashout() {
+            socket.emit('cashout');
+            addLog('Attempting cashout');
+        }
+
+        function clearLogs() {
+            logs.innerHTML = '';
+            addLog('Logs cleared');
+        }
+
+        // Auto-join game on load
+        setTimeout(() => {
+            if (socket.connected) {
+                joinGame();
+            }
+        }, 1000);
+    </script>
+</body>
+</html> 

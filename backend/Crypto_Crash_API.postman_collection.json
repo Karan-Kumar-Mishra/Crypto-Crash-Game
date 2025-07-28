@@ -1,0 +1,322 @@
+{
+  "info": {
+    "name": "Crypto Crash Game API",
+    "description": "Complete API collection for the Crypto Crash Game backend",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "playerId",
+      "value": "player1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "Game",
+      "item": [
+        {
+          "name": "Get Game State",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/game/state",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "game", "state"]
+            }
+          }
+        },
+        {
+          "name": "Get Game History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/game/history?limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "game", "history"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Round Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/game/round/round-1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "game", "round", "round-1"]
+            }
+          }
+        },
+        {
+          "name": "Verify Round Fairness",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/game/verify/round-1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "game", "verify", "round-1"]
+            }
+          }
+        },
+        {
+          "name": "Get Game Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/game/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "game", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Get Recent Crashes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/game/recent-crashes?limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "game", "recent-crashes"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Wallet",
+      "item": [
+        {
+          "name": "Get Player Balance",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/wallet/balance/{{playerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "wallet", "balance", "{{playerId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Player Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/wallet/stats/{{playerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "wallet", "stats", "{{playerId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Player Transactions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/wallet/transactions/{{playerId}}?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "wallet", "transactions", "{{playerId}}"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Crypto Prices",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/wallet/prices",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "wallet", "prices"]
+            }
+          }
+        },
+        {
+          "name": "Convert USD to Crypto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usdAmount\": 100,\n  \"currency\": \"btc\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/wallet/convert",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "wallet", "convert"]
+            }
+          }
+        },
+        {
+          "name": "Get Transaction Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/wallet/transaction/tx-hash-1-1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "wallet", "transaction", "tx-hash-1-1"]
+            }
+          }
+        },
+        {
+          "name": "Get Multiple Player Summaries",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"playerIds\": [\"player1\", \"player2\", \"player3\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/wallet/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "wallet", "summary"]
+            }
+          }
+        },
+        {
+          "name": "Get Leaderboard",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/wallet/leaderboard?limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "wallet", "leaderboard"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sample Players",
+      "item": [
+        {
+          "name": "Player 1 Balance",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/wallet/balance/player1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "wallet", "balance", "player1"]
+            }
+          }
+        },
+        {
+          "name": "Player 2 Balance",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/wallet/balance/player2",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "wallet", "balance", "player2"]
+            }
+          }
+        },
+        {
+          "name": "Player 3 Balance",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/wallet/balance/player3",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "wallet", "balance", "player3"]
+            }
+          }
+        },
+        {
+          "name": "Player 4 Balance",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/wallet/balance/player4",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "wallet", "balance", "player4"]
+            }
+          }
+        },
+        {
+          "name": "Player 5 Balance",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/wallet/balance/player5",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "wallet", "balance", "player5"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+} 
